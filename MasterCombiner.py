@@ -18,18 +18,21 @@ for df in lst_of_values:
     series_of_labeled = series_of_labeled.append(df.iloc[:, 3].dropna())
 
 sns.distplot(series_of_labeled, kde=False, rug=True)
-plt.show()
 
 #Grabbing all the dataframes and forming one big dataframe with necessary data
-lst_of_values = [E27_1, E27_2, E27_f, H4L_1, H4L_2, H4L_f]
 master_data = pd.DataFrame([])
 for n in np.arange(6):
     series = pd.Series([])
     for df in lst_of_values:
-        series = series.append(df.iloc[:, n], ignore_index=True)
+        corrected = gc.verify_identity(df)
+        series = series.append(corrected.iloc[:, n], ignore_index=True)
     master_data[lst_of_values[0].columns[n]] = series
 master_data = gc.team_renamer(master_data)
 
 master_check = gc.check_accuracy(master_data, gc.cosine_sim(gc.table_by_group(gc.goals_pruner(master_data))))
 sns.lmplot(x='Calculated Values', y='Degree of goal alignment  (1 = lo, 5 = hi)', data=master_check)
 plt.show()
+
+#Creating qualitative 1-5 score from quantitative cosine similarity results
+binned_master = gc.binner(master_check, 'Calculated Values', np.arange(1, 6))
+results = pd.crosstab(binned_master['Degree of goal alignment  (1 = lo, 5 = hi)'], binned_master['Calculated Labels'])

@@ -14,11 +14,11 @@ nltk.download('all')
 # Table Clean #
 ###############
 
-def goals_pruner(table):
+def goals_pruner(dataframe):
     """Removes NaN values, fixes labels and leaves just teamname and shared goal"""
 
-    table['Teamname'], table['Shared Goal'] = table.iloc[:, 0], table.iloc[:, 1]
-    return table[['Teamname', 'Shared Goal']].dropna(subset=['Shared Goal'])
+    dataframe['Teamname'], dataframe['Shared Goal'] = dataframe.iloc[:, 0], dataframe.iloc[:, 1]
+    return dataframe[['Teamname', 'Shared Goal']].dropna(subset=['Shared Goal'])
 
 def table_to_bundles(table):
     """Takes table and returns one with shared goals as text bundles."""
@@ -26,10 +26,10 @@ def table_to_bundles(table):
     table['Shared Goal'] = [TextBundle(responses).lemmatized for responses in table['Shared Goal']]
     return table
 
-def table_by_group(table):
+def table_by_group(dataframe):
     """Takes table and returns one with entries grouped by team"""
 
-    summed_table = table.groupby('Teamname')
+    summed_table = dataframe.groupby('Teamname')
     return summed_table['Shared Goal'].agg(list)
 
 def check_accuracy(dataframe, sim_values):
@@ -38,10 +38,11 @@ def check_accuracy(dataframe, sim_values):
     labeled_data['Calculated Values'] = sim_values
     return labeled_data
 
-def team_renamer(dataframe):
-    """Relabels teamname so that they are all unique. Does so without changing team composition"""
+def team_renamer(dataframe, column_index=0):
+    """Relabels teamname so that they are all unique. Does so without changing team composition. Also verifies column_index
+       is called called 'Teamname'"""
 
-    new_teams, new_name, old_name = [], -1, 0
+    new_teams, new_name, old_name, dataframe = [], -1, 0, verify_identity(dataframe, column_index)
     for team_name in dataframe['Teamname']:
         if team_name == old_name:
             new_teams.append(new_name)
@@ -69,6 +70,12 @@ def binner(dataframe, column, div_labels=np.arange(1,6), lower=0, upper=1):
         new_values.append(div_labels[n-1])
     dataframe['Calculated Labels'] = new_values
     return dataframe
+
+def verify_identity(dataframe, column_index=0):
+    if dataframe.columns[column_index] != 'Teamname':
+        dataframe.columns =  list(dataframe.columns[0:column_index]) + ['Teamname'] + list(dataframe.columns[(column_index+1):])
+    return dataframe
+
 ##############################
 # Goal Relatedness Functions #
 ##############################
@@ -76,19 +83,18 @@ def binner(dataframe, column, div_labels=np.arange(1,6), lower=0, upper=1):
 def cosine_sim(dataframe):
     """Takes csv_file and finds cosine similarity, returning values in a Series"""
 
-    documents = table_by_group(goals_pruner(dataframe))
+    documents = dataframe
     labels = []
     for label in documents.index:
         labels.append(label)
     tfidf_vectorizer = TfidfVectorizer(stop_words='english')
 
-    #cosine_matrices gives us matrices comparing all the things!
+    #cosine_quants gives us matrices comparing all the things!
     cosine_matrices = []
     for document in documents:
         sparse_matrix = tfidf_vectorizer.fit_transform(document)
         cosine_matrices.append(cosine_similarity(sparse_matrix, sparse_matrix))
 
-    #cosine_quants gives us a Series with all calculated values.
     cosine_quants = []
     for matrix in cosine_matrices:
         row_sums = []
