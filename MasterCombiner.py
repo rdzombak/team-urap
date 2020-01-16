@@ -1,4 +1,4 @@
-import GoalCongruenceNLTK as gc
+import GoalCongruence as gc
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
