@@ -29,6 +29,8 @@ for n in np.arange(6):
     master_data[lst_of_values[0].columns[n]] = series
 master_data = gc.team_renamer(master_data)
 
+perfection = pd.read_csv(r'~/Desktop/dummytest.csv')
+
 master_check = gc.check_accuracy(master_data, gc.cosine_sim(gc.table_by_group(gc.goals_pruner(master_data)), gc.tfidf_embed))
 sns.lmplot(x='Calculated Values', y='Degree of goal alignment  (1 = lo, 5 = hi)', data=master_check)
 plt.show()
@@ -36,3 +38,5 @@ plt.show()
 #Creating qualitative 1-5 score from quantitative cosine similarity results
 binned_master = gc.binner(master_check, 'Calculated Values', np.arange(1, 6))
 results = pd.crosstab(binned_master['Degree of goal alignment  (1 = lo, 5 = hi)'], binned_master['Calculated Labels'])
+
+perfection_check = gc.check_accuracy(perfection, gc.cosine_sim(gc.table_by_group(gc.goals_pruner(perfection)), gc.tfidf_embed))

@@ -79,6 +79,21 @@ def series_builder(dataframe, array_or_list):
     new_series = pd.Series(array_or_list, index=labels)
     return new_series
 
+def tokenize(string, category_string=' '):
+    """Takes in string and splits text up when encountering text in the specified category. Returns an array"""
+
+    tokens = np.array([])
+    curr_token = ""
+    for char in string:
+        if char not in category_string:
+            curr_token += char
+        else:
+            if curr_token:
+                tokens = np.append(tokens, curr_token)
+                curr_token = ""
+    return tokens
+
+
 ##############################
 #      Word Embeddings       #
 ##############################
@@ -101,6 +116,7 @@ def cosine_sim(dataframe, embedding):
     for document in dataframe:
         wv_matrix = embedding(document)
         cosine_matrices.append(cosine_similarity(wv_matrix, wv_matrix))
+    print(cosine_matrices)
 
     cosine_quants = []
     for matrix in cosine_matrices:
@@ -113,3 +129,5 @@ def cosine_sim(dataframe, embedding):
                 row_sums.append(row_sum - 1)
         cosine_quants.append(np.sum(row_sums) / len(row_sums))
     return series_builder(dataframe, cosine_quants)
+
+
