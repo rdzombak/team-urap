@@ -109,25 +109,32 @@ def tfidf_embed(document):
 #   Similarity Calculators   #
 ##############################
 
-def cosine_sim(dataframe, embedding):
-    """Creates series with index of dataframe with cosine similarity calculations for each team"""
+class Cosine_sim:
+    def __init__(self, dataframe, embedding):
+        self.individ = np.array([]) #REQUIRED INFO
+        self.team = np.array([]) #REQUIRED INFO
+        for team in Cosine_sim.sim_matrix(dataframe, embedding):
+            team_member = Cosine_sim.personal_sim(team)
+            self.individ = np.append(self.individ, team_member)
+            self.team = np.append(self.team, np.mean(team_member))
 
-    cosine_matrices = []
-    for document in dataframe:
-        wv_matrix = embedding(document)
-        cosine_matrices.append(cosine_similarity(wv_matrix, wv_matrix))
-    print(cosine_matrices)
+    def sim_matrix(dataframe, embedding):
+        """Creates series with index of dataframe with cosine similarity calculations for each team"""
 
-    cosine_quants = []
-    for matrix in cosine_matrices:
-        row_sums = []
-        for row in matrix:
-            row_sum = np.sum(row)
-            if row_sum < 1:
-                row_sums.append(row_sum)
+        cosine_matrices = []
+        for document in dataframe:
+            wv_matrix = embedding(document)
+            cosine_matrices.append(cosine_similarity(wv_matrix, wv_matrix))
+        return cosine_matrices
+
+    def personal_sim(matrices):
+        """Returns an ARRAY of similarity values that correspond to each person"""
+
+        personal_sim_values = np.array([])
+        for row in matrices:
+            if np.sum(row) and len(row) - 1:
+                personal_sim_values = np.append(personal_sim_values, (np.sum(row) - 1) / (len(row) - 1))
             else:
-                row_sums.append(row_sum - 1)
-        cosine_quants.append(np.sum(row_sums) / len(row_sums))
-    return series_builder(dataframe, cosine_quants)
-
+                personal_sim_values = np.append(personal_sim_values, 0)
+        return personal_sim_values
 
