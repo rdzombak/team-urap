@@ -8,7 +8,8 @@ import pandas as pd
 ###############
 
 def goals_pruner(dataframe):
-    """Removes NaN values, fixes labels and leaves just teamname and shared goal"""
+    """Takes in dataframe, Removes NaN values, REASSIGNS proper TEAMNAME and SHARED GOAL column titles,
+    and RETURNS a dataframe with all other columns DROPPED"""
 
     dataframe['Teamname'], dataframe['Shared Goal'] = dataframe.iloc[:, 0], dataframe.iloc[:, 1]
     return dataframe[['Teamname', 'Shared Goal']].dropna(subset=['Shared Goal'])
@@ -19,14 +20,15 @@ def table_to_bundles(table):
     table['Shared Goal'] = [TextBundle(responses).lemmatized for responses in table['Shared Goal']]
     return table
 
-def table_by_group(dataframe):
-    """Takes table and returns one with entries grouped by team"""
+def series_by_team(dataframe):
+    """Takes in dataframe and RETURNS series INDEXED by teamname with entries containing lists of team responses"""
 
     summed_table = dataframe.groupby('Teamname')
     return summed_table['Shared Goal'].agg(list)
 
 def check_accuracy(dataframe, sim_values):
     """Takes table and returns groupby agg'd by sum. Then joins simulated values to the sim values based on index."""
+
     labeled_data = dataframe.iloc[:, :5].groupby('Teamname').agg(sum)
     labeled_data['Calculated Values'] = sim_values
     return labeled_data
@@ -109,10 +111,60 @@ def tfidf_embed(document):
 #   Similarity Calculators   #
 ##############################
 
-class Cosine_sim:
+class Diagnostics:
+    """Contains all tools necessary to determine accuracy of results"""
+
+    def __init__(self, sim_object):
+        """Creates all dataframes required for quantifying result accuracy"""
+
+        self.sim_object = sim_object
+        self.individ = #Some dataframe containing individs
+        self.team = #some dataframe containing teams
+
+    def quant_to_ord(self, column, num_labels, lower=0, upper=1):
+        """Creates bins to convert quantitative similarity values into qualitative measurements.
+
+           COLUMN: Can be int or string. Function CONVERTS its quantitative measures into ordinal measures for comparison.
+           NUM LABELS: needs to be array or list. Indicates how many equal sized bins we should be using.
+           LOWER and UPPER: dictate max and min bound of bins"""
+
+        bins = np.linspace(0, 1, 5)
+        if type(column) != str:
+            column = self.sim_object.dataframe.columns[column]
+
+        new_values = []
+        for value in self.sim_object.dataframe[column]:
+            n = 0
+            while n < len(bins) and bins[n] < value:
+                n += 1
+            new_values.append(div_labels[n - 1])
+        new_df = self.sim_object.dataframe
+        new_df['Calculated Labels'] = new_values
+        return new_df
+
+    def comparison_builder(self, team_calc=True):
+        """RETURNS table GROUPED BY teamname and AGGREGATED by sum, and JOINS simulated values to the labels based on index"""
+
+        labeled_data = self.sim_object.dataframe.iloc[:, :5].groupby('Teamname').agg(sum)
+        if team_calc:
+            labeled_data['Calculated Values'] = self.sim_object.team
+        else:
+            labeled_data['Calculated Values'] = self.sim_object.individ
+        return labeled_data
+
+
+class Cosine_Sim:
+    """Object's attributes represent data structures generated from applying cosine similarity across team survey"""
+
     def __init__(self, dataframe, embedding):
-        self.individ = np.array([]) #REQUIRED INFO
-        self.team = np.array([]) #REQUIRED INFO
+        """Creation of cosine_sim object involves creation of three object instances:
+           DATAFRAME: dataframe that was passed in
+           INDIVID: array containing all avg. similarity values per team member in order of entry
+           TEAM: array containing all avg. similarity values for teams in order of entry"""
+
+        self.dataframe = np.array([])
+        self.individ = np.array([])
+        self.team = np.array([])
         for team in Cosine_sim.sim_matrix(dataframe, embedding):
             team_member = Cosine_sim.personal_sim(team)
             self.individ = np.append(self.individ, team_member)
