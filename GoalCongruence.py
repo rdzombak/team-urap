@@ -118,29 +118,35 @@ class Diagnostics:
         """Creates all dataframes required for quantifying result accuracy"""
 
         self.sim_object = sim_object
-        self.individ = #Some dataframe containing individs
-        self.team = #some dataframe containing teams
+        self.individ_quant = self.comparison_builder(False) #Some dataframe containing individs
+        self.team_quant = self.comparison_builder() #some dataframe containing teams
+        self.individ_ord = self.quant_to_ord(team_calc=False)
+        self.team_ord = self.quant_to_ord()
 
-    def quant_to_ord(self, column, num_labels, lower=0, upper=1):
-        """Creates bins to convert quantitative similarity values into qualitative measurements.
+    def quant_to_ord(self, column='Calculated Values', num_labels=5, lower=0, upper=1, team_calc=True):
+        """Creates bins to convert quantitative similarity values into qualitative measurements. RETURNS these ordinal values
+           in NEW COLUMN called 'Calculated Labels'
 
            COLUMN: Can be int or string. Function CONVERTS its quantitative measures into ordinal measures for comparison.
            NUM LABELS: needs to be array or list. Indicates how many equal sized bins we should be using.
            LOWER and UPPER: dictate max and min bound of bins"""
 
-        bins = np.linspace(0, 1, 5)
-        if type(column) != str:
-            column = self.sim_object.dataframe.columns[column]
+        if team_calc:
+            dataframe = self.team_quant
+        else:
+            dataframe = self.individ_quant
 
+        bins = np.linspace(lower, upper, num_labels)
+        if type(column) != str:
+            column = dataframe.columns[column]
         new_values = []
-        for value in self.sim_object.dataframe[column]:
+        for value in dataframe[column]:
             n = 0
             while n < len(bins) and bins[n] < value:
                 n += 1
             new_values.append(div_labels[n - 1])
-        new_df = self.sim_object.dataframe
-        new_df['Calculated Labels'] = new_values
-        return new_df
+        dataframe['Calculated Labels'] = new_values
+        return dataframe
 
     def comparison_builder(self, team_calc=True):
         """RETURNS table GROUPED BY teamname and AGGREGATED by sum, and JOINS simulated values to the labels based on index"""
