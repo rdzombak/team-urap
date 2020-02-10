@@ -15,7 +15,6 @@ wv_model = KeyedVectors.load_word2vec_format(r'~/Documents/GitHub/team-urap/test
 def word2vec_embed(document):
     """Takes in document and converts statements into sentence vectors"""
 
-    #First, clean data of all stop words
     sentence_vectors = []
     for member in document:
         statement = gc.tokenize(member, ",.?!;:/\|[]{}()<>& _")
@@ -27,3 +26,4 @@ def word2vec_embed(document):
         sentence_vectors.append(sentence_vector)
     return sentence_vectors
 
+#not in stopwords.words('english') and word

@@ -11,3 +11,4 @@ master_tester = Cosine_Sim(master_data, tfidf_embed)
 
 #test_diagnostics = Diagnostics(test_tester)
 master_diagnostics = Diagnostics(master_tester)
+results = pd.crosstab(master_diagnostics.team_ord['Degree of goal alignment  (1 = lo, 5 = hi)'], master_diagnostics.team_ord['Calculated Labels'])

@@ -115,7 +115,11 @@ class Diagnostics:
     """Contains all tools necessary to determine accuracy of results"""
 
     def __init__(self, sim_object):
-        """Creates all dataframes required for quantifying result accuracy"""
+        """Creates all dataframes required for quantifying result accuracy
+
+           SIM OBJECT: Simulated values from another object passed in
+           INDIVID QUANT: Dataframe with COLUMNS teamname, AGGREGATED responses in lists, and individual scores
+           TEAM QUANT: Dataframe with COLUMNS teamname, calculated score, calculated label, actual rating"""
 
         self.sim_object = sim_object
         self.individ_quant = self.comparison_builder(False) #Some dataframe containing individs
@@ -163,9 +167,11 @@ class Diagnostics:
 class Cosine_Sim:
     """Object's attributes represent data structures generated from applying cosine similarity across team survey"""
 
-    def __init__(self, dataframe, embedding):
+    def __init__(self, dataframe, embedding=tfidf_embed):
         """Creation of cosine_sim object involves creation of three object instances:
-           DATAFRAME: dataframe that was passed in
+           DATAFRAME: dataframe that was passed in. RAW DATA!
+           SERIES: series made after data cleaning.
+
            INDIVID: array containing all avg. similarity values per team member in order of entry
            TEAM: array containing all avg. similarity values for teams in order of entry"""
 
@@ -174,6 +180,7 @@ class Cosine_Sim:
 
         self.individ = np.array([])
         self.team = np.array([])
+
         for team in Cosine_Sim.sim_matrix(self.series, embedding):
             team_member = Cosine_Sim.personal_sim(team)
             self.individ = np.append(self.individ, team_member)
