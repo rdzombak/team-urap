@@ -13,17 +13,16 @@ import GoalCongruence as gc
 wv_model = KeyedVectors.load_word2vec_format(r'~/Documents/GitHub/team-urap/test_data/GoogleNews-vectors-negative300.bin.gz', binary=True)
 
 def word2vec_embed(document):
-    """Takes in document and converts statements into sentence vectors"""
+    """Returns list of sentence vectors generated from DOCUMENT, a list of strings."""
 
     sentence_vectors = []
     for member in document:
         statement = gc.tokenize(member, ",.?!;:/\|[]{}()<>& _")
-        sentence_vector = [0 for i in np.arange(300)]
+        sentence_vector = np.zeros(300)
         for word in statement:
             if word not in stopwords.words('english') and word in wv_model.vocab:
-                sentence_vector = [np.sum(i) for i in zip(wv_model[word], sentence_vector)]
-                sentence_vector /= np.linalg.norm(sentence_vector)
-        sentence_vectors.append(sentence_vector)
+                sentence_vector = np.array(wv_model[word]) + sentence_vector
+        if len(statement):
+            sentence_vector /= len(statement)
+        sentence_vectors.append(list(sentence_vector))
     return sentence_vectors
-
-#not in stopwords.words('english') and word

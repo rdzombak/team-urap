@@ -127,12 +127,11 @@ class Diagnostics:
         self.team_ord = self.quant_to_ord()
 
     def quant_to_ord(self, column='Calculated Values', num_labels=5, lower=0, upper=1, team_calc=True):
-        """Creates bins to convert quantitative similarity values into qualitative measurements. RETURNS these ordinal values
-           in NEW COLUMN called 'Calculated Labels'
-
-           COLUMN: Can be int or string. Function CONVERTS its quantitative measures into ordinal measures for comparison.
-           NUM LABELS: needs to be array or list. Indicates how many equal sized bins we should be using.
-           LOWER and UPPER: dictate max and min bound of bins"""
+        """Returns binned similarity measurements in a new column called
+           'Calculated Labels'. Created by converting quantitative similarity
+           values in COLUMN to qualitative measurements by placing each
+           value in NUM_LABELS bins ranging from LOWER to UPPER. Values
+           organized by team or individual depending on value of TEAM_CALC."""
 
         if team_calc:
             dataframe = self.team_quant
@@ -145,17 +144,20 @@ class Diagnostics:
         ord_values = []
         for value in dataframe[column]:
             lower_bound_index = 0
-            while lower_bound_index < len(bins) - 1 and bins[lower_bound_index] < value:
+            while lower_bound_index < len(bins) - 1 \
+                    and bins[lower_bound_index] < value:
                 lower_bound_index += 1
             ord_values.append(lower_bound_index)
         dataframe['Calculated Labels'] = ord_values
         return dataframe
 
     def comparison_builder(self, team_calc=True):
-        """RETURNS table GROUPED BY teamname and AGGREGATED by sum, and JOINS simulated values to the labels based on index"""
+        """RETURNS table GROUPED BY teamname and AGGREGATED by sum,
+           and JOINS simulated values to the labels based on index"""
 
         if team_calc:
-            alignment = self.sim_object.dataframe.iloc[:, :5].groupby('Teamname').agg(sum)[['Degree of goal alignment  (1 = lo, 5 = hi)']]
+            alignment = self.sim_object.dataframe.iloc[:, :5].groupby(
+                'Teamname').agg(sum)[['Degree of goal alignment  (1 = lo, 5 = hi)']]
             alignment['Calculated Values'] = self.sim_object.team
             return alignment
         else:
@@ -164,22 +166,33 @@ class Diagnostics:
             return individ_labels
 
 
-class Cosine_Sim:
-    """Object's attributes represent data structures generated from applying cosine similarity across team survey"""
+class Similarity_Calcs:
+    """Object's attributes represent data structures generated from applying
+       similarity calculations across team survey."""
 
-    def __init__(self, dataframe, embedding=tfidf_embed):
-        """Creation of cosine_sim object involves creation of three object instances:
-           DATAFRAME: dataframe that was passed in. RAW DATA!
-           SERIES: series made after data cleaning.
-
-           INDIVID: array containing all avg. similarity values per team member in order of entry
-           TEAM: array containing all avg. similarity values for teams in order of entry"""
-
+    def __init__(self, dataframe, embedding):
         self.dataframe = dataframe
         self.series = series_by_team(goals_pruner(dataframe))
 
         self.individ = np.array([])
         self.team = np.array([])
+
+class Cosine_Sim(Similarity_Calcs):
+    """Object's attributes represent data structures generated from applying
+       cosine similarity across team survey."""
+
+    def __init__(self, dataframe, embedding=tfidf_embed):
+        """Creation of cosine_sim object involves creation of three object
+           instances:
+           DATAFRAME: dataframe that was passed in. RAW DATA!
+           SERIES: series made after data cleaning.
+
+           INDIVID: array containing all avg. similarity values per team member
+           in order of entry
+           TEAM: array containing all avg. similarity values for teams in order
+           of entry"""
+
+        super().__init__(dataframe, embedding)
 
         for team in Cosine_Sim.sim_matrix(self.series, embedding):
             team_member = Cosine_Sim.personal_sim(team)
@@ -187,7 +200,8 @@ class Cosine_Sim:
             self.team = np.append(self.team, np.mean(team_member))
 
     def sim_matrix(series, embedding):
-        """Creates series with index of series with cosine similarity calculations for each team"""
+        """Creates series with index of series with cosine similarity
+           calculations for each team"""
 
         cosine_matrices = []
         for document in series:
@@ -196,7 +210,8 @@ class Cosine_Sim:
         return cosine_matrices
 
     def personal_sim(matrices):
-        """Returns an ARRAY of similarity values that correspond to each person"""
+        """Returns an ARRAY of similarity values that correspond to
+           each person"""
 
         personal_sim_values = np.array([])
         for row in matrices:
